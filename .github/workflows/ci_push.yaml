@@ -1,0 +1,42 @@
+name: Continuous Deployment
+
+env:
+  LAMBDA_FUNCTION_NAME: MyEmailSenderFunction
+  AWS_REGION: us-west-2
+
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Build the application artifact (war, jar, zip, etc.).
+      - name: Build the bundle (Lambda)
+        run: |
+          ls -al
+          zip function.zip index.py
+          ls -al
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update function code (Lambda)
+        run: |
+          aws lambda update-function-code --function-name=${{ env.LAMBDA_FUNCTION_NAME }} --zip-file=fileb://function.zip
+
+      - name: Step 5 - Cleanup
+        run: |
+          rm function.zip
+          ls -al  
+
